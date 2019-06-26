@@ -2,7 +2,7 @@
 Advanced Guidelines from React Learning
 
 ## start
-first step, you should `npm install` to get resouces.
+first step, you should `npm install` to get resources.
 ```
 npm start
 ```
