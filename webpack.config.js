@@ -3,6 +3,8 @@ const {
     CleanWebpackPlugin
 } = require("clean-webpack-plugin");
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const CopyPlugin = require("copy-webpack-plugin");
+const loaderUtils = require("loader-utils");
 const glob = require("glob");
 const path = require("path");
 
@@ -32,8 +34,8 @@ const htmlPlugins = entryKeys.map(function (name) {
 
 // 代理设置
 let proxys = {};
-entryKeys.map(function(name) {
-    proxys["/" + name+"/index.html"] = "/" + name;
+entryKeys.map(function (name) {
+    proxys["/" + name + "/index.html"] = "/" + name;
 });
 
 console.log(proxys);
@@ -46,7 +48,7 @@ module.exports = {
         path: path.resolve(__dirname, './dist'),
     },
     resolve: {
-        extensions: ['.js', '.jsx', '.ts', '.tsx', '.css']
+        extensions: ['.js', '.jsx', '.ts', '.tsx', '.css', '.scss', '.json']
     },
     devtool: "cheap-module-eval-source-map",
     module: {
@@ -59,13 +61,68 @@ module.exports = {
             loader: 'ts-loader',
             exclude: /node_modules/
         }, {
+            test: /\.scss$/,
+            exclude: /node_modules/,
+            use: [{
+                loader: MiniCssExtractPlugin.loader,
+                options: {
+                    publicPath: "../"
+                }
+            }, {
+                loader: 'css-loader',
+                options: {
+                    importLoaders: 1,
+                    modules: {
+                        localIdentName: '[path]__[name]__[local]__[hash:base64:5]',
+                        getLocalIdent: (context, localIdentName, localName, options) => {
+                            switch (localName.substr(0, 4)) {
+                                case "ant-":
+                                    return localName;
+                                default:
+                                    if (!options.context)
+                                        options.context = context.options && typeof context.options.context === "string" ? context.options.context : context.context;
+                                    var request = path.relative(options.context, context.resourcePath);
+                                    options.content = options.hashPrefix + request + "+" + localName;
+                                    localIdentName = localIdentName.replace(/\[local\]/gi, localName);
+                                    var hash = loaderUtils.interpolateName(context, localIdentName, options);
+                                    return hash.replace(new RegExp("[^a-zA-Z0-9\\-_\u00A0-\uFFFF]", "g"), "-").replace(/^((-?[0-9])|--)/, "_$1");
+                            }
+                        }
+                    },
+                },
+            }, 'postcss-loader', 'sass-loader'],
+        }, {
             test: /\.css$/,
-            loaders: [MiniCssExtractPlugin.loader, 'css-loader'],
-            include: /node_modules/
+            use: [{
+                loader: MiniCssExtractPlugin.loader,
+                options: {
+                    publicPath: "../"
+                }
+            }, 'css-loader']
+        }, {
+            test: /\.(png|jpg|jpeg|gif|woff|woff2|eot|otf|ttf|svg|mp3)$/,
+            use: [{
+                loader: "url-loader",
+                options: {
+                    name: "[name].[hash:5].[ext]",
+                    limit: 8192
+                }
+            }],
+        }, {
+            test: /\.json$/,
+            loader: 'json-loader',
+            exclude: /node_modules/
         }]
     },
     plugins: [
         new CleanWebpackPlugin(),
+        new CopyPlugin([{
+            from: "./src/process_component/mock",
+            to: "mock"
+        }, {
+            from: "./src/process_component/download",
+            to: "download"
+        }]),
         new MiniCssExtractPlugin({
             filename: '[name].css'
         }),
