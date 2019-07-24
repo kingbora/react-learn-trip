@@ -1,0 +1,11 @@
+.shoppingCart {
+    .rowStyle {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+    }
+    .cartList {
+        font-size: 16px;
+        color: #fff;
+    }
+}

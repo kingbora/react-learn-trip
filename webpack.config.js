@@ -8,7 +8,7 @@ const loaderUtils = require("loader-utils");
 const glob = require("glob");
 const path = require("path");
 
-const filterFileName = /custom_table_modal/;
+const filterFileName = /shopping_cart/;
 
 function getEntry() {
     let entry = {};
