@@ -8,13 +8,17 @@ const loaderUtils = require("loader-utils");
 const glob = require("glob");
 const path = require("path");
 
+const filterFileName = /custom_table_modal/;
+
 function getEntry() {
     let entry = {};
     let globPath = './src/**/entry.?(j|t)s?(x)';
     let files = glob.sync(globPath);
     files.forEach(function (name) {
         let dirName = name.replace(/\.\/src\/(.+)\/entry\.(j|t)sx?$/, "$1");
-        entry[dirName] = name;
+        if (filterFileName.test(dirName)) {
+            entry[dirName] = name;
+        }
     });
     return entry;
 }

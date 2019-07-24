@@ -6,7 +6,8 @@
         "noImplicitAny": false,
         "suppressImplicitAnyIndexErrors": true,
         "jsx": "react", //忽略jsx，让jsx交给babel去处理
-        "sourceMap": true
+        "sourceMap": true,
+        "experimentalDecorators": true
     },
     "compileOnSave": false,
     "exclude": [

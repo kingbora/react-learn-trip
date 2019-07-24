@@ -45,7 +45,7 @@ const mapStateToProps = (state: RootState) => ({
     todos: state[TODOS_REDUCER].todos
 });
 
-const mapDispatchToProps = dispatch => ({
+const mapDispatchToProps = (dispatch: any) => ({
     addTodo: (text: string) => dispatch(addTodo(text)),
     editTodo: (t: Todo, s: string) => dispatch(editTodo(t, s)),
     deleteTodo: (t: Todo) => dispatch(deleteTodo(t)),
