@@ -8,7 +8,8 @@ const loaderUtils = require("loader-utils");
 const glob = require("glob");
 const path = require("path");
 
-const filterFileName = /shopping_cart/;
+// const filterFileName = /process_component/;
+const filterFileName = /(custom_table_modal|shopping_cart)/;
 
 function getEntry() {
     let entry = {};
@@ -28,13 +29,22 @@ const entry = getEntry();
 const entryKeys = Object.keys(entry);
 
 // html输出模板
-const htmlPlugins = entryKeys.map(function (name) {
+const otherPlugins = entryKeys.map(function (name) {
     return new HtmlWebpackPlugin({
         filename: name + "/index.html",
         template: "./src/index.html",
         chunks: [name] // 仅引入当前配置的js文件
     });
 });
+if (entryKeys.indexOf("process_component") > -1) {
+    otherPlugins.push(new CopyPlugin([{
+        from: "./src/process_component/mock",
+        to: "mock"
+    }, {
+        from: "./src/process_component/download",
+        to: "download"
+    }]));
+}
 
 // 代理设置
 let proxys = {};
@@ -120,17 +130,10 @@ module.exports = {
     },
     plugins: [
         new CleanWebpackPlugin(),
-        new CopyPlugin([{
-            from: "./src/process_component/mock",
-            to: "mock"
-        }, {
-            from: "./src/process_component/download",
-            to: "download"
-        }]),
         new MiniCssExtractPlugin({
             filename: '[name].css'
         }),
-        ...htmlPlugins
+        ...otherPlugins
     ],
     devServer: {
         proxy: proxys
