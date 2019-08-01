@@ -4,12 +4,18 @@ const {
 } = require("clean-webpack-plugin");
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CopyPlugin = require("copy-webpack-plugin");
+const ParallelUglifyPlugin = require("webpack-parallel-uglify-plugin");
+const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const BundleAnalyzerPlugin = require("webpack-bundle-analyzer").BundleAnalyzerPlugin;
 const loaderUtils = require("loader-utils");
+const { CheckerPlugin } = require('awesome-typescript-loader')
 const glob = require("glob");
 const path = require("path");
 
+const isProd = process.env.NODE_ENV === "production";
+
 // const filterFileName = /process_component/;
-const filterFileName = /(custom_table_modal|shopping_cart)/;
+const filterFileName = /(react_echarts)/;
 
 function getEntry() {
     let entry = {};
@@ -31,9 +37,16 @@ const entryKeys = Object.keys(entry);
 // html输出模板
 const otherPlugins = entryKeys.map(function (name) {
     return new HtmlWebpackPlugin({
+        title: name,
         filename: name + "/index.html",
-        template: "./src/index.html",
-        chunks: [name] // 仅引入当前配置的js文件
+        template: "./src/index.ejs",
+        minify: { // 压缩HTML文件
+            removeComments: true, // 移除HTML中的注释
+            collapseWhitespace: true, // 删除空白符与换行符
+            minifyCSS: true // 压缩内联css
+        },
+        inject: !isProd,
+        chunks: [name]
     });
 });
 if (entryKeys.indexOf("process_component") > -1) {
@@ -46,42 +59,74 @@ if (entryKeys.indexOf("process_component") > -1) {
     }]));
 }
 
+if (isProd) {
+    otherPlugins.push(
+        new CleanWebpackPlugin(),
+        new BundleAnalyzerPlugin()
+    );
+}
+
 // 代理设置
 let proxys = {};
 entryKeys.map(function (name) {
     proxys["/" + name + "/index.html"] = "/" + name;
 });
 
-console.log(proxys);
-
 module.exports = {
-    mode: "development",
+    mode: isProd ? "production" : "development",
     entry: entry,
     output: {
         filename: '[name]/[name].js', // 输出对应的js文件到对应的文件夹下
+        chunkFilename: '[name]/[name].vendor.js',
         path: path.resolve(__dirname, './dist'),
     },
     resolve: {
         extensions: ['.js', '.jsx', '.ts', '.tsx', '.css', '.scss', '.json']
     },
-    devtool: "cheap-module-eval-source-map",
+    devtool: isProd ? false : "cheap-module-eval-source-map",
+    optimization: {
+        minimize: isProd,
+        minimizer: [
+            new ParallelUglifyPlugin({
+                cacheDir: '.cache/',
+                uglifyJS: {
+                    output: {
+                        comments: false
+                    },
+                    warnings: false
+                }
+            }), new OptimizeCSSAssetsPlugin({
+                assetNameRegExp: /\.css$/g,
+                cssProcessor: require("cssnano"),
+                cssProcessorPluginOptions: {
+                    preset: ['default', {
+                        discardComments: {
+                            removeAll: true
+                        },
+                        normalizeUnicode: false
+                    }]
+                },
+                canPrint: true
+            })
+        ]
+    },
     module: {
         rules: [{
             test: /\.jsx?$/,
-            use: 'babel-loader',
+            loader: 'babel-loader?cacheDirectory=true',
+            include: [path.resolve(__dirname, "src")],
             exclude: /node_modules/
         }, {
             test: /\.tsx?$/,
-            loader: 'ts-loader',
+            loader: 'awesome-typescript-loader',
+            include: [path.resolve(__dirname, "src")],
             exclude: /node_modules/
         }, {
             test: /\.scss$/,
             exclude: /node_modules/,
+            include: [path.resolve(__dirname, "src")],
             use: [{
                 loader: MiniCssExtractPlugin.loader,
-                options: {
-                    publicPath: "../"
-                }
             }, {
                 loader: 'css-loader',
                 options: {
@@ -104,14 +149,11 @@ module.exports = {
                         }
                     },
                 },
-            }, 'postcss-loader', 'sass-loader'],
+            }, 'postcss-loader', 'fast-sass-loader'],
         }, {
             test: /\.css$/,
             use: [{
                 loader: MiniCssExtractPlugin.loader,
-                options: {
-                    publicPath: "../"
-                }
             }, 'css-loader']
         }, {
             test: /\.(png|jpg|jpeg|gif|woff|woff2|eot|otf|ttf|svg|mp3)$/,
@@ -129,10 +171,10 @@ module.exports = {
         }]
     },
     plugins: [
-        new CleanWebpackPlugin(),
         new MiniCssExtractPlugin({
-            filename: '[name].css'
+            filename: '[name]/[name].css'
         }),
+        new CheckerPlugin(),
         ...otherPlugins
     ],
     devServer: {

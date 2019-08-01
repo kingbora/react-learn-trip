@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title><%= htmlWebpackPlugin.options.title%></title>
+    <% if (!htmlWebpackPlugin.options.inject) {%>
+        <script>
+            var cssEle = document.createElement("link");
+            cssEle.async = true;
+            cssEle.href = "<%= htmlWebpackPlugin.files.css[0].replace('../react_echarts', '.')%>";
+            cssEle.rel = "stylesheet";
+            cssEle.type = "text/css";
+            document.head.appendChild(cssEle);
+        </script>
+    <% } %>
+</head>
+
+<body>
+    <div id="root"></div>
+    <% if (!htmlWebpackPlugin.options.inject) {%>
+        <script>
+            var scriptEle = document.createElement("script");
+            scriptEle.async = false;
+            scriptEle.src = "<%= htmlWebpackPlugin.files.js[0].replace('../react_echarts', '.')%>";
+            document.body.appendChild(scriptEle);
+        </script>
+    <% } %>
+</body>
+
+</html>
