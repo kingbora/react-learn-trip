@@ -14,8 +14,8 @@ const path = require("path");
 
 const isProd = process.env.NODE_ENV === "production";
 
-// const filterFileName = /process_component/;
-const filterFileName = /(react_echarts)/;
+const filterFileName = /react_echarts/;
+// const filterFileName = /(file_upload)/;
 
 function getEntry() {
     let entry = {};

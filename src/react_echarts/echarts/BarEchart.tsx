@@ -28,7 +28,7 @@ export default class BarEchart extends React.Component<BarEchartProps, BarEchart
             this.setState({
                 downloadUrl: base64
             });
-        }, 2500);
+        }, 2000);
     }
 
     generateOption = () => {
@@ -53,7 +53,32 @@ export default class BarEchart extends React.Component<BarEchartProps, BarEchart
                 text: data.title,
                 subtitle: data.subtitle,
                 x: 'center'
-            };  
+            };
+        }
+
+        if (data.xAxis.data) {
+            options.xAxis.push({
+                type: "category",
+                data: data.xAxis.data
+            });
+
+            options.yAxis.push({
+                type: "value",
+                max: data.yAxis.max,
+                splitNumber: ~~((data.yAxis.max - data.yAxis.min) / data.yAxis.split)
+            });
+        } else if (data.yAxis.data) {
+            isVertical = false;
+            options.yAxis.push({
+                type: "category",
+                data: data.yAxis.data
+            });
+
+            options.xAxis.push({
+                type: "value",
+                max: data.xAxis.max,
+                splitNumber: ~~((data.xAxis.max - data.xAxis.min) / data.xAxis.split)
+            });
         }
 
         data.data.map((item: any) => {
@@ -61,30 +86,6 @@ export default class BarEchart extends React.Component<BarEchartProps, BarEchart
                 options.legend.data.push(item.name);
             }
 
-            if (data.xAxis.data) {
-                options.xAxis.push({
-                    type: "category",
-                    data: data.xAxis.data
-                });
-
-                options.yAxis.push({
-                    type: "value",
-                    max: data.yAxis.max,
-                    splitNumber: ~~((data.yAxis.max - data.yAxis.min) / data.yAxis.split)
-                });
-            } else if (data.yAxis.data) {
-                isVertical = false;
-                options.yAxis.push({
-                    type: "category",
-                    data: data.yAxis.data
-                });
-
-                options.xAxis.push({
-                    type: "value",
-                    max: data.xAxis.max,
-                    splitNumber: ~~((data.xAxis.max - data.xAxis.min) / data.xAxis.split)
-                });
-            }
             options.series.push({
                 name: item.name ? item.name : null,
                 type: 'bar',
@@ -94,12 +95,14 @@ export default class BarEchart extends React.Component<BarEchartProps, BarEchart
                         color: item.color,
                         label: {
                             show: true,
-                            position: isVertical ? "top": "right"
+                            position: isVertical ? "top" : "right"
                         }
                     }
                 }
             });
         });
+
+        console.log(options);
 
         return options;
     }
